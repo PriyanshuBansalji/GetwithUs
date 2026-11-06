@@ -1,0 +1,1684 @@
+/*
+ * Motion and 3D primitives of the final design (docs/design.md, Motion).
+ * Every loop here pauses off screen (OnScreen sets data-paused) and every
+ * primitive has a still, complete state under reduced motion.
+ */
+
+/* Off screen or in a background tab: CSS loops hold still. */
+[data-paused],
+[data-paused] *,
+[data-paused] *::before,
+[data-paused] *::after {
+  animation-play-state: paused !important;
+}
+
+/* One-shot entrances still finish off screen: a demo mounted while paused must show
+   its finished lines (the design's still frame), not lines frozen at opacity 0. */
+[data-paused] .chat-in,
+[data-paused] .fade-up {
+  animation-play-state: running !important;
+}
+
+.dots-bg {
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+/* Brand marks (TechLogo): the brand colour, or the text colour where it would be too faint. */
+.tech-logo {
+  fill: var(--logo-light);
+}
+:root[data-theme="dark"] .tech-logo {
+  fill: var(--logo-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .tech-logo {
+    fill: var(--logo-dark);
+  }
+}
+
+/* Small shared keyframes. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-up {
+  animation: fade-up 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.pulse-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--amber);
+  opacity: 0;
+  animation: ping 1.8s ease-out infinite;
+}
+
+/* ---------- Typewriter and TypedText ---------- */
+.typewriter {
+  white-space: nowrap;
+}
+.typewriter-caret {
+  display: inline-block;
+  width: 0.07em;
+  height: 0.82em;
+  margin-left: 0.06em;
+  vertical-align: -0.06em;
+  background: var(--accent);
+  animation: caret-blink 1s steps(1) infinite;
+}
+.typed-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+/* ---------- RevealText: words rise out of a mask, 60 ms apart, once ---------- */
+.reveal-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+.reveal-word {
+  display: inline-block;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-text[data-reveal="waiting"] .reveal-word {
+    opacity: 0;
+    transform: translateY(105%);
+  }
+  .reveal-text[data-reveal="shown"] .reveal-word {
+    transition:
+      transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 600ms ease-out;
+    transition-delay: calc(var(--i, 0) * 60ms);
+  }
+}
+
+/* ---------- Marquee ---------- */
+.marquee-viewport {
+  overflow: hidden;
+  padding-block: 12px;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 50s) linear infinite;
+}
+.marquee-set {
+  display: flex;
+  flex: none;
+  gap: 14px;
+}
+.marquee-reverse {
+  animation-direction: reverse;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-50% - 7px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-viewport {
+    overflow-x: auto;
+    mask-image: none;
+  }
+  .marquee-track {
+    animation: none !important;
+  }
+  .marquee-set[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* ---------- TiltScene: a card with a small 3D scene whose layers lift on hover ---------- */
+.tilt-scene {
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 18px 18px 30px;
+}
+.tilt-scene:hover {
+  box-shadow: var(--shadow-lg);
+}
+.tilt-scene-well {
+  position: relative;
+  height: 250px;
+  border-radius: var(--radius-scene);
+  border: 1px solid var(--line);
+  background-color: var(--bg-soft);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  transform-style: preserve-3d;
+}
+.tilt-layer {
+  position: absolute;
+  transform: translateZ(calc(var(--z) * 1px));
+  transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tilt-scene-text {
+  transform: translateZ(18px);
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tilt-scene:hover .tilt-layer {
+    transform: translateZ(calc(var(--z) * 1.9px));
+  }
+}
+
+/* A small floating chip inside scenes. */
+.float-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  box-shadow: var(--shadow);
+  font-size: 0.84375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+/* ---------- FloatingTiles and RotatingSeal ---------- */
+.floating-tile {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.floating-tile-inner {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow:
+    0 22px 40px rgb(15 27 45 / 0.22),
+    inset 0 -6px 0 rgb(15 27 45 / 0.06);
+  transform: rotate(var(--r, 0deg));
+  animation: bob 5s ease-in-out infinite;
+}
+.floating-tile-inner svg {
+  width: 36px;
+  height: 36px;
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-14px) rotate(var(--r, 0deg));
+  }
+}
+
+.rotating-seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+.rotating-seal-text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: spin 16s linear infinite;
+}
+.rotating-seal-text text {
+  font:
+    600 10.5px var(--font-sans),
+    sans-serif;
+  letter-spacing: 0.14em;
+  fill: var(--ink);
+}
+/* The brand mark in a round frame, like a profile picture: the tile's corners fall outside the circle. */
+.rotating-seal-core {
+  display: block;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--brand-tile);
+}
+.rotating-seal-core svg,
+.chat-avatar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Stage tags: small labels on 3D stages ---------- */
+.stage-tag {
+  position: absolute;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+.stage-tag-live {
+  color: var(--accent);
+}
+.stage-tag-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: caret-blink 1.2s steps(1) infinite;
+}
+
+/* ---------- Orbit3D ---------- */
+.orbit {
+  --cs: max(78px, 20cqw);
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 620px;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.orbit[data-dragging] {
+  cursor: grabbing;
+}
+.orbit-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.orbit-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: calc(var(--cs) * 2.6);
+  height: calc(var(--cs) * 2.6);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
+  opacity: 0.75;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.orbit-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  perspective: 900px;
+  pointer-events: none;
+}
+.orbit-cube {
+  position: relative;
+  width: var(--cs);
+  height: var(--cs);
+  transform-style: preserve-3d;
+}
+.orbit-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--accent);
+  background-color: var(--face);
+  background-image:
+    linear-gradient(var(--accent-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-soft) 1px, transparent 1px);
+  background-size: calc(var(--cs) / 6) calc(var(--cs) / 6);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: calc(var(--cs) * 0.15);
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.orbit-face:nth-child(1) {
+  transform: translateZ(calc(var(--cs) / 2));
+}
+.orbit-face:nth-child(2) {
+  transform: rotateY(180deg) translateZ(calc(var(--cs) / 2));
+}
+.orbit-face:nth-child(3) {
+  transform: rotateY(90deg) translateZ(calc(var(--cs) / 2));
+}
+.orbit-face:nth-child(4) {
+  transform: rotateY(-90deg) translateZ(calc(var(--cs) / 2));
+}
+.orbit-face:nth-child(5) {
+  transform: rotateX(90deg) translateZ(calc(var(--cs) / 2));
+}
+.orbit-face:nth-child(6) {
+  transform: rotateX(-90deg) translateZ(calc(var(--cs) / 2));
+}
+/* The brand mark (LogoMark) on the cube's side faces. */
+.orbit-mark {
+  display: block;
+  width: 44%;
+  height: 44%;
+}
+.orbit-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.66em;
+  padding: 0.46em 1.07em 0.46em 0.46em;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  /* 11 px at the smallest, and at least 2.3em tall, so the chips stay readable and tappable on phones. */
+  font-size: clamp(11px, 2.5cqw, 15px);
+  min-height: 2.3em;
+  font-weight: 600;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
+}
+.orbit-label-short {
+  display: none;
+}
+@container (max-width: 520px) {
+  .orbit-label-long {
+    display: none;
+  }
+  .orbit-label-short {
+    display: inline;
+  }
+}
+.orbit-chip:hover,
+.orbit-chip:focus-visible {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    var(--shadow);
+}
+.orbit-chip-icon {
+  display: grid;
+  place-items: center;
+  width: 2.27em;
+  height: 2.27em;
+  border-radius: 50%;
+  color: #fff;
+}
+.orbit-chip-icon svg {
+  width: 1.13em;
+  height: 1.13em;
+}
+.orbit .stage-tag-live {
+  top: 2%;
+  right: 2%;
+}
+.orbit .stage-tag-drag {
+  top: 2%;
+  left: 2%;
+}
+
+/* ---------- TagSphere ---------- */
+.sphere {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sphere[data-dragging] {
+  cursor: grabbing;
+}
+.sphere-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.sphere-ring-outer {
+  inset: 2%;
+  border: 1px dashed var(--line-2);
+  animation: spin 60s linear infinite;
+}
+.sphere-ring-inner {
+  inset: 10%;
+  border: 1px solid var(--line);
+  animation: spin 40s linear infinite reverse;
+}
+.sphere-sat {
+  position: absolute;
+  top: -6px;
+  left: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.sphere-halo {
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-soft), transparent 70%);
+  pointer-events: none;
+}
+.sphere-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.45em 0.95em 0.45em 0.6em;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-size: clamp(10px, 2.5cqw, 14px);
+  font-weight: 600;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  transition:
+    border-color 300ms,
+    box-shadow 300ms;
+}
+.sphere-chip svg {
+  width: 1.3em;
+  height: 1.3em;
+  flex: none;
+}
+.sphere-chip-dot {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--c);
+}
+.sphere-chip[data-highlight] {
+  border-color: var(--c);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent),
+    var(--shadow);
+}
+.sphere .stage-tag-drag {
+  bottom: 1%;
+  left: 50%;
+  z-index: 300;
+  transform: translateX(-50%);
+}
+.category-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: left;
+  transition:
+    border-color 300ms,
+    box-shadow 300ms;
+}
+.category-button:hover,
+.category-button[aria-pressed="true"] {
+  border-color: var(--c);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 14%, transparent);
+}
+.category-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  color: var(--c);
+}
+
+/* ---------- ProcessStepper ---------- */
+.stepper {
+  --circle: 86px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+}
+.stepper-track {
+  position: absolute;
+  top: calc(var(--circle) / 2 - 1px);
+  right: calc(50% / var(--n));
+  left: calc(50% / var(--n));
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--line-2) 0 8px, transparent 8px 16px);
+}
+.stepper-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: var(--progress, 0%);
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--glow);
+  transition: width 900ms cubic-bezier(0.6, 0, 0.2, 1);
+}
+.stepper-runner {
+  position: absolute;
+  top: -6px;
+  left: var(--progress, 0%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 6px var(--accent-soft),
+    0 0 22px var(--glow);
+  transform: translateX(-50%);
+  transition: left 900ms cubic-bezier(0.6, 0, 0.2, 1);
+}
+.stepper-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0 6px;
+  border-radius: 16px;
+  color: var(--ink);
+}
+.stepper-circle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--circle);
+  height: var(--circle);
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink);
+  transition:
+    background-color 400ms,
+    color 400ms,
+    border-color 400ms,
+    transform 500ms cubic-bezier(0.3, 1.6, 0.5, 1),
+    box-shadow 400ms;
+}
+.stepper-circle svg {
+  width: calc(var(--circle) * 0.35);
+  height: calc(var(--circle) * 0.35);
+}
+.stepper-circle::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+}
+.stepper-step[aria-selected="true"] .stepper-circle {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: scale(1.1);
+  box-shadow: 0 16px 40px var(--glow);
+}
+.stepper-step[aria-selected="true"] .stepper-circle::after {
+  animation: step-ring 1.8s ease-out infinite;
+}
+.stepper-step[data-done] .stepper-circle {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.stepper-label {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+@keyframes step-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+.stepper-detail {
+  display: flex;
+  gap: 26px;
+  align-items: flex-start;
+  max-width: 760px;
+  min-height: 150px;
+  margin: 52px auto 0;
+  padding: 30px 34px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.stepper-number {
+  flex: none;
+  min-width: 58px;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 0.9;
+}
+@media (max-width: 760px) {
+  .stepper {
+    --circle: 56px;
+  }
+  .stepper-label {
+    font-size: 0.78125rem;
+  }
+  .stepper-detail {
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+  }
+}
+
+/* ---------- CodeTypewriter ---------- */
+.code-stage {
+  perspective: 1500px;
+  padding: 40px 10px;
+}
+.code-rig {
+  position: relative;
+  transform: rotateY(var(--ry, -14deg)) rotateX(var(--rx, 7deg));
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.code-editor {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-scene);
+  background: var(--ed-bg);
+  box-shadow:
+    0 50px 90px rgb(15 27 45 / 0.35),
+    0 0 0 1px rgb(255 255 255 / 0.06);
+  color: #d6deeb;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  transform: translateZ(0);
+}
+.code-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ed-line);
+  background: var(--ed-bar);
+}
+.code-light {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.code-tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.code-tab {
+  height: 44px;
+  padding: 0 14px;
+  border-bottom: 2px solid transparent;
+  color: #8b9ab0;
+  font: 13px var(--font-mono);
+  white-space: nowrap;
+}
+.code-tab[aria-selected="true"] {
+  border-bottom-color: #22d3ee;
+  background: var(--ed-bg);
+  color: #e6edf5;
+}
+.code-tab:focus-visible {
+  outline-offset: -3px;
+}
+.code-body {
+  display: flex;
+  height: 358px;
+  padding: 16px 0;
+}
+.code-gutter {
+  width: 46px;
+  padding-right: 14px;
+  color: #76859c;
+  line-height: 1.75;
+  text-align: right;
+  user-select: none;
+}
+.code-gutter [data-on] {
+  color: #b4c0d0;
+}
+.code-text {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  font: inherit;
+  line-height: 1.75;
+  white-space: pre;
+  animation: code-in 220ms ease-out both;
+}
+@keyframes code-in {
+  from {
+    opacity: 0;
+  }
+}
+.t-kw {
+  color: #c792ea;
+}
+.t-str {
+  color: #c3e88d;
+}
+.t-cm {
+  color: #7f8fa6;
+  font-style: italic;
+}
+.t-num {
+  color: #f78c6c;
+}
+.t-fn {
+  color: #82aaff;
+}
+.t-type {
+  color: #ffcb6b;
+}
+.t-dec {
+  color: #f07178;
+}
+.t-p {
+  color: #89ddff;
+}
+.t-id {
+  color: #d6deeb;
+}
+.code-caret {
+  display: inline-block;
+  width: 8px;
+  height: 17px;
+  vertical-align: -3px;
+  background: #22d3ee;
+  animation: caret-blink 1s steps(1) infinite;
+}
+.code-term {
+  height: 78px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--ed-line);
+  background: var(--ed-bar);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.code-term-dim {
+  color: #7f8fa6;
+}
+.code-term-ok {
+  color: #3ee08a;
+}
+.code-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 30px;
+  padding: 0 16px;
+  background: #0b6870;
+  color: #e8fbfd;
+  font-size: 12px;
+}
+.code-status-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.code-status-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b9fff0;
+}
+.code-seal {
+  position: absolute;
+  right: -30px;
+  bottom: -40px;
+  transform: translateZ(110px);
+  pointer-events: none;
+}
+.language-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: left;
+  transition:
+    border-color 300ms,
+    box-shadow 300ms,
+    transform 300ms;
+}
+.language-row[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .language-row:hover {
+    transform: translateX(4px);
+  }
+}
+.language-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.language-tile svg {
+  width: 24px;
+  height: 24px;
+}
+@media (max-width: 600px) {
+  /* Phones: smaller tiles. The section clips at the screen edge (overflow-x-clip), so the
+     stage does not clip too: that cut the editor's shadow into a hard-edged box. */
+  .floating-tile-inner {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+  .floating-tile-inner svg {
+    width: 26px;
+    height: 26px;
+  }
+  .code-seal {
+    display: none;
+  }
+  .code-body {
+    height: 320px;
+  }
+  .code-editor {
+    font-size: 12px;
+  }
+}
+
+/* ---------- ChatDemo ---------- */
+.chat {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #075e54;
+  color: #fff;
+}
+:root[data-theme="dark"] .chat-head {
+  background: #1f2c34;
+}
+.chat-avatar {
+  display: block;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--brand-tile);
+}
+.chat-status {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+.chat-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 420px;
+  padding: 16px 14px;
+  overflow: hidden;
+  background-color: #efeae2;
+}
+:root[data-theme="dark"] .chat-body {
+  background-color: #0b141a;
+}
+.chat-bubble {
+  position: relative;
+  max-width: 82%;
+  padding: 7px 10px 6px;
+  border-radius: 10px;
+  box-shadow: 0 1px 1px rgb(15 27 45 / 0.12);
+  color: #111b21;
+  font-size: 0.90625rem;
+  line-height: 1.4;
+}
+.chat-bubble[data-from="bot"] {
+  align-self: flex-start;
+  border-top-left-radius: 2px;
+  background: #fff;
+}
+.chat-bubble[data-from="customer"] {
+  align-self: flex-end;
+  border-top-right-radius: 2px;
+  background: #d9fdd3;
+}
+:root[data-theme="dark"] .chat-bubble {
+  color: #e9edef;
+}
+:root[data-theme="dark"] .chat-bubble[data-from="bot"] {
+  background: #202c33;
+}
+:root[data-theme="dark"] .chat-bubble[data-from="customer"] {
+  background: #005c4b;
+}
+.chat-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 2px;
+  color: #5b6b75;
+  font-size: 0.6875rem;
+}
+:root[data-theme="dark"] .chat-meta {
+  color: #c4d0d6;
+}
+.chat-ticks {
+  color: #027eb5;
+}
+:root[data-theme="dark"] .chat-ticks {
+  color: #53bdeb;
+}
+.chat-card {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  background: rgb(14 124 134 / 0.08);
+}
+.chat-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: flex-start;
+}
+.chat-reply {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #c9d3d8;
+  background: #fff;
+  /* WhatsApp's link blue, one step darker: 5.4:1 against white either way round. */
+  color: #0370a6;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background-color 200ms,
+    color 200ms;
+}
+.chat-reply[data-picked] {
+  border-color: #0370a6;
+  background: #0370a6;
+  color: #fff;
+}
+:root[data-theme="dark"] .chat-reply {
+  border-color: #2a3942;
+  background: #202c33;
+  color: #53bdeb;
+}
+:root[data-theme="dark"] .chat-reply[data-picked] {
+  background: #53bdeb;
+  color: #0b141a;
+}
+.chat-typing {
+  display: flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-top-left-radius: 2px;
+  background: #fff;
+}
+:root[data-theme="dark"] .chat-typing {
+  background: #202c33;
+}
+.chat-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8696a0;
+  animation: typing-bounce 1s infinite;
+}
+.chat-typing span:nth-child(2) {
+  animation-delay: 150ms;
+}
+.chat-typing span:nth-child(3) {
+  animation-delay: 300ms;
+}
+.chat-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--card-2);
+}
+.chat-handoff {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.chat-input {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 0.9375rem;
+}
+.chat-placeholder {
+  color: var(--muted);
+}
+.chat-in {
+  animation: fade-up 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- CallDemo ---------- */
+.call {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+.call-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.call-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c-ai) 16%, transparent);
+  /* Mixed toward the text colour so the initials pass 4.5:1 in both themes. */
+  color: color-mix(in srgb, var(--c-ai) 75%, var(--ink));
+  font-weight: 800;
+}
+.call-timer {
+  margin-left: auto;
+  color: var(--body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.call-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 56px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.call-wave span {
+  width: 4px;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--wave, var(--line-2));
+  transform: scaleY(0.12);
+  transition: background-color 300ms;
+}
+.call-wave[data-speaking] span {
+  animation: wave-bar 900ms ease-in-out infinite;
+}
+.call-wave span:nth-child(3n + 1) {
+  animation-delay: -200ms;
+}
+.call-wave span:nth-child(3n + 2) {
+  animation-delay: -500ms;
+}
+.call-wave span:nth-child(4n) {
+  animation-duration: 700ms;
+}
+@keyframes wave-bar {
+  0%,
+  100% {
+    transform: scaleY(0.15);
+  }
+  50% {
+    transform: scaleY(0.85);
+  }
+}
+.call-transcript {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  height: 300px;
+  padding: 18px 20px;
+  overflow: hidden;
+}
+.call-line {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.call-speaker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.call-line[data-from="agent"] .call-speaker {
+  color: var(--accent);
+}
+.call-crm {
+  margin: 0 16px 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+}
+.call-crm dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+}
+.call-crm dt {
+  color: var(--muted);
+}
+.call-crm dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The demo label, on every scripted demo. */
+.example-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ---------- WebGLModel ---------- */
+.model-panel {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background-color: var(--bg-soft);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+.model-panel::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow), transparent 65%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.model-still,
+.model-canvas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 600ms ease-out;
+}
+.model-canvas {
+  opacity: 0;
+}
+.model-panel[data-live] .model-canvas {
+  opacity: 1;
+}
+.model-panel[data-live] .model-still {
+  opacity: 0;
+}
+
+/* WhatsApp button: three soft rings when it first appears, then still. */
+.wa-fab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--wa);
+  opacity: 0;
+  animation: fab-ping 2.4s ease-out 3;
+}
+@keyframes fab-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.12, 1.3);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: every loop above stops at a still, complete frame. */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot::after,
+  .typewriter-caret,
+  .typed-caret,
+  .code-caret,
+  .stage-tag-live::before,
+  .floating-tile-inner,
+  .rotating-seal-text,
+  .sphere-ring,
+  .stepper-step[aria-selected="true"] .stepper-circle::after,
+  .chat-typing span,
+  .call-wave span,
+  .wa-fab::before {
+    animation: none !important;
+  }
+  .call-wave span {
+    transform: scaleY(0.35);
+  }
+  .typewriter-caret,
+  .typed-caret {
+    display: none;
+  }
+}
+
+/* Reduced motion: the demos show their whole script, so they grow to fit it. */
+@media (prefers-reduced-motion: reduce) {
+  .chat-body {
+    height: auto;
+    min-height: 420px;
+  }
+  .call-transcript {
+    height: auto;
+    min-height: 300px;
+  }
+}
+
+/* ---------- Home sections ---------- */
+
+/* Service card scenes: browser bars, phone, rising bars, the integration hub. */
+.scene-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  height: 110px;
+}
+.scene-bars span {
+  flex: 1;
+  border-radius: 6px 6px 2px 2px;
+  background: color-mix(in srgb, var(--c-mkt) 30%, transparent);
+  transform-origin: bottom;
+  animation: bar-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 60ms);
+}
+.scene-bars span:last-child {
+  background: var(--c-mkt);
+}
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+.hub-wire {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.55;
+  stroke-width: 1.6;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+  animation: hub-flow 1.4s linear infinite;
+}
+@keyframes hub-flow {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+/* The closing band's rings and breathing glow. */
+.cta-orb {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+}
+.cta-orb > span {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgb(255 255 255 / 0.22);
+}
+.cta-orb > span:nth-child(1) {
+  inset: 0;
+  animation: spin 40s linear infinite;
+}
+.cta-orb > span:nth-child(2) {
+  inset: 16%;
+  border-style: solid;
+  border-color: rgb(255 255 255 / 0.12);
+  animation: spin 28s linear infinite reverse;
+}
+.cta-orb > span:nth-child(3) {
+  inset: 34%;
+  border: 0;
+  background: radial-gradient(circle, #22d3ee 0%, rgb(34 211 238 / 0.25) 45%, transparent 70%);
+  animation: breathe 4s ease-in-out infinite;
+}
+.cta-orb b {
+  position: absolute;
+  top: -6px;
+  left: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 16px #22d3ee;
+}
+.cta-orb > span:nth-child(2) b {
+  background: #f5b54a;
+  box-shadow: 0 0 16px #f5b54a;
+}
+@keyframes breathe {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* Commitment cards: the second sentence opens on hover or keyboard focus, and is always open without hover. */
+.commit-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 400ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 300ms ease-out;
+}
+.commit-card:hover .commit-more,
+.commit-card:focus-visible .commit-more,
+.commit-card:focus-within .commit-more {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+@media (hover: none) {
+  .commit-more {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+.commit-ghost {
+  -webkit-text-stroke: 1.5px var(--line-2);
+  transform: translateZ(30px);
+  transition: -webkit-text-stroke-color 300ms ease-out;
+}
+.commit-card:hover .commit-ghost,
+.commit-card:focus-visible .commit-ghost {
+  -webkit-text-stroke-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-bars span,
+  .hub-wire,
+  .cta-orb > span {
+    animation: none !important;
+  }
+}
+
+/* ---------- Service pages ---------- */
+
+/* The WhatsApp window marker sweeps from the message to the template-only zone. */
+.wa-window-marker {
+  left: 0;
+  animation: wa-window 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes wa-window {
+  0% {
+    left: 0;
+  }
+  70%,
+  85% {
+    left: 66.6%;
+    background: var(--ok);
+  }
+  92%,
+  100% {
+    left: 90%;
+    background: var(--amber);
+  }
+}
+
+/* What you get: each check draws in, 80 ms apart, as the list enters. */
+.tick-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tick-list[data-enter="waiting"] .tick-path {
+    stroke-dashoffset: 1;
+  }
+  .tick-list[data-enter="shown"] .tick-path {
+    animation: tick-draw 500ms ease-out both;
+    animation-delay: calc(var(--i, 0) * 80ms + 200ms);
+  }
+}
+@keyframes tick-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* How we work: numbered steps on a dashed track that fills as it enters. */
+.mini-steps {
+  position: relative;
+  display: grid;
+  gap: 20px;
+}
+@media (min-width: 768px) {
+  .mini-steps {
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 16px;
+  }
+  .mini-steps::before,
+  .mini-steps::after {
+    content: "";
+    position: absolute;
+    top: 21px;
+    right: calc(50% / var(--n));
+    left: calc(50% / var(--n));
+    height: 2px;
+  }
+  .mini-steps::before {
+    background: repeating-linear-gradient(90deg, var(--line-2) 0 8px, transparent 8px 16px);
+  }
+  .mini-steps::after {
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--glow);
+    transform-origin: left;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mini-steps[data-enter="waiting"]::after {
+    transform: scaleX(0);
+  }
+  .mini-steps[data-enter="shown"]::after {
+    animation: track-fill 1400ms cubic-bezier(0.6, 0, 0.2, 1) both 200ms;
+  }
+}
+@keyframes track-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-window-marker {
+    animation: none !important;
+    left: 66.6%;
+  }
+}
+
+/* A sample week: the days rise in one after another as the strip enters. */
+@media (prefers-reduced-motion: no-preference) {
+  .week-strip[data-enter="waiting"] .week-day {
+    opacity: 0;
+  }
+  .week-strip[data-enter="shown"] .week-day {
+    animation: fade-up 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 140ms + 150ms);
+  }
+  .week-strip[data-enter="shown"] .week-day[data-last] {
+    animation:
+      fade-up 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both calc(var(--i, 0) * 140ms + 150ms),
+      week-glow 1200ms ease-out both calc(var(--i, 0) * 140ms + 650ms);
+  }
+}
+@keyframes week-glow {
+  from {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  to {
+    box-shadow:
+      0 0 0 6px var(--accent-soft),
+      var(--shadow);
+  }
+}
+.week-day[data-last] {
+  box-shadow:
+    0 0 0 6px var(--accent-soft),
+    var(--shadow);
+}
+
+/* Legal pages: a thin reading progress bar under the header. */
+.reading-progress {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  z-index: 39;
+  height: 3px;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(var(--progress, 0));
+}

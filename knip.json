@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["scripts/*.{mjs,ts}", "next.config.ts"],
+  "project": [
+    "src/**/*.{ts,tsx,css}",
+    "scripts/**/*.{mjs,ts}",
+    "tests/**/*.{ts,tsx}",
+    "*.{ts,mts}"
+  ],
+  "ignoreDependencies": ["@tailwindcss/turbopack"],
+  "next": {
+    "config": []
+  }
+}

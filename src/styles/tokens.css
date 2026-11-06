@@ -1,0 +1,186 @@
+/*
+ * Design tokens for the final design (docs/design.md, decisions/0014). Semantic
+ * colours: light values on :root, dark values under data-theme="dark" (and the
+ * system dark preference when no theme is set). Tailwind exposes them as
+ * utilities (`bg-card`, `text-body`, `border-line`) through `@theme inline`, so
+ * every utility reads the live variable and follows the theme switch. The 3D
+ * panels read the same variables through getComputedStyle. The default palette
+ * is cleared so no other hue can be used by accident.
+ */
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f4f7f9;
+  --card: #ffffff;
+  --card-2: #f7f9fb;
+  --ink: #0f1b2d;
+  --body: #46515f;
+  --muted: #5b6673;
+  --line: #e4e9ee;
+  --line-2: #d3dbe2;
+  --accent: #0e7c86;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(14 124 134 / 0.1);
+  --glow: rgb(14 124 134 / 0.3);
+  --dot: #d6dfe6;
+  --hdr: rgb(255 255 255 / 0.86);
+  --shadow: 0 1px 2px rgb(15 27 45 / 0.05), 0 16px 36px rgb(15 27 45 / 0.09);
+  --shadow-lg: 0 2px 6px rgb(15 27 45 / 0.06), 0 34px 70px rgb(15 27 45 / 0.14);
+  --chip: #ffffff;
+  --face: rgb(255 255 255 / 0.94);
+  --cta: #0f1b2d;
+  --cta-ink: #ffffff;
+  /* The brand mark (docs/brand): ink tile and white G in light; card tile and light G in dark. */
+  --brand-tile: #0f1b2d;
+  --brand-mark: #ffffff;
+  --cta-body: #c3cdd8;
+  /* Darker than the prototype's #b86e00 and #16864b so text passes 4.5:1 (design.md). */
+  --amber: #a05f00;
+  --ok: #127a43;
+  --err: #b42318;
+  --wa: #15803d;
+  --c-web: #2563eb;
+  --c-mob: #7c3aed;
+  --c-data: #0e7c86;
+  --c-ai: #d9480f;
+  --c-mkt: #be185d;
+  --ed-bg: #0f1b2d;
+  --ed-bar: #0b1524;
+  --ed-line: #1d2b40;
+  --header-h: 76px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1115;
+  --bg-soft: #12161b;
+  --card: #161b22;
+  --card-2: #1b212a;
+  --ink: #e9eef3;
+  --body: #a9b4c0;
+  --muted: #8e9aa7;
+  --line: #232b35;
+  --line-2: #323c48;
+  --accent: #22d3ee;
+  --accent-ink: #06222a;
+  --accent-soft: rgb(34 211 238 / 0.12);
+  --glow: rgb(34 211 238 / 0.38);
+  --dot: #222a33;
+  --hdr: rgb(14 17 21 / 0.86);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 36px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 34px 70px rgb(0 0 0 / 0.5);
+  --chip: #1a2029;
+  --face: rgb(22 27 34 / 0.94);
+  --cta: #151b23;
+  --cta-ink: #e9eef3;
+  --brand-tile: #161b22;
+  --brand-mark: #e9eef3;
+  --cta-body: #a9b4c0;
+  --amber: #f5b54a;
+  --ok: #3ee08a;
+  --err: #ff7a70;
+  --c-web: #6b9bff;
+  --wa: #4ade80;
+  --c-mob: #a78bfa;
+  --c-data: #22d3ee;
+  --c-ai: #ff9f5a;
+  --c-mkt: #f472b6;
+  --ed-bg: #0b0f14;
+  --ed-bar: #080b0f;
+  --ed-line: #18212c;
+  color-scheme: dark;
+}
+
+/* The system dark preference, unless the page is explicitly light (it is by default; see the theme script). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1115;
+    --bg-soft: #12161b;
+    --card: #161b22;
+    --card-2: #1b212a;
+    --ink: #e9eef3;
+    --body: #a9b4c0;
+    --muted: #8e9aa7;
+    --line: #232b35;
+    --line-2: #323c48;
+    --accent: #22d3ee;
+    --accent-ink: #06222a;
+    --accent-soft: rgb(34 211 238 / 0.12);
+    --glow: rgb(34 211 238 / 0.38);
+    --dot: #222a33;
+    --hdr: rgb(14 17 21 / 0.86);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 36px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 34px 70px rgb(0 0 0 / 0.5);
+    --chip: #1a2029;
+    --face: rgb(22 27 34 / 0.94);
+    --cta: #151b23;
+    --cta-ink: #e9eef3;
+    --brand-tile: #161b22;
+    --brand-mark: #e9eef3;
+    --cta-body: #a9b4c0;
+    --amber: #f5b54a;
+    --ok: #3ee08a;
+    --err: #ff7a70;
+    --c-web: #6b9bff;
+    --wa: #4ade80;
+    --c-mob: #a78bfa;
+    --c-data: #22d3ee;
+    --c-ai: #ff9f5a;
+    --c-mkt: #f472b6;
+    --ed-bg: #0b0f14;
+    --ed-bar: #080b0f;
+    --ed-line: #18212c;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-glow: var(--glow);
+  --color-dot: var(--dot);
+  --color-hdr: var(--hdr);
+  --color-chip: var(--chip);
+  --color-face: var(--face);
+  --color-cta: var(--cta);
+  --color-cta-ink: var(--cta-ink);
+  --color-cta-body: var(--cta-body);
+  --color-brand-tile: var(--brand-tile);
+  --color-brand-mark: var(--brand-mark);
+  --color-amber: var(--amber);
+  --color-ok: var(--ok);
+  --color-err: var(--err);
+  --color-wa: var(--wa);
+  --color-c-web: var(--c-web);
+  --color-c-mob: var(--c-mob);
+  --color-c-data: var(--c-data);
+  --color-c-ai: var(--c-ai);
+  --color-c-mkt: var(--c-mkt);
+  --color-ed-bg: var(--ed-bg);
+  --color-ed-bar: var(--ed-bar);
+  --color-ed-line: var(--ed-line);
+  --color-white: #ffffff;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --radius-tag: 999px;
+  --radius-control: 12px;
+  --radius-scene: 18px;
+  --radius-card: 24px;
+  --radius-panel: 26px;
+
+  --shadow-soft: var(--shadow);
+  --shadow-lift: var(--shadow-lg);
+}

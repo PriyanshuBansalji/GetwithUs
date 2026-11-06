@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+src/server/db/migrations
+docs/prototype
+.next
+coverage
+playwright-report
+test-results
+docs/build-prompt.md
+docs/build-addendum.md
+AGENTS.md
