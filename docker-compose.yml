@@ -1,0 +1,14 @@
+# Local Postgres for development: `docker compose up -d`, then `pnpm db:migrate`.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: getwithus
+      POSTGRES_PASSWORD: getwithus
+      POSTGRES_DB: getwithus
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+volumes:
+  postgres-data:

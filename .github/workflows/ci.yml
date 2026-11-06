@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Build-time values only. None of these are real credentials.
+  DATABASE_URL: postgres://getwithus:getwithus@localhost:5432/getwithus
+  AUTH_SECRET: ci-auth-secret-000000000000000000000000000000
+  ADMIN_EMAILS: admin@example.com
+  VERIFICATION_PEPPER: ci-verification-pepper-0000000000000000000000
+  CRON_SECRET: ci-cron-secret-00000000
+  EMAIL_TRANSPORT: console
+  EMAIL_FROM: Getwithus <no-reply@example.com>
+  TEAM_NOTIFY_EMAILS: team@example.com
+  LEADS_API_KEY: ci-leads-api-key-0000000000000000000000000
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm check
+      - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: getwithus
+          POSTGRES_PASSWORD: getwithus
+          POSTGRES_DB: getwithus_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U getwithus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The suite migrates and empties this database; see tests/e2e/support/env.ts.
+      E2E_DATABASE_URL: postgres://getwithus:getwithus@localhost:5432/getwithus_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      # Visual baselines are per platform. Until Linux baselines are committed, CI
+      # writes them on the first run (uploaded below) instead of failing.
+      - run: pnpm test:e2e --update-snapshots=missing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright
+          path: |
+            playwright-report/
+            test-results/
+            tests/e2e/**/*-linux.png
+          retention-days: 14
