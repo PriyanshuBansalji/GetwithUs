@@ -32,9 +32,17 @@ export function hashKey(value: string): string {
 }
 
 function originsAllowed(): Set<string> {
-  const origins = new Set([new URL(env.NEXT_PUBLIC_SITE_URL).origin]);
-  for (const host of [env.VERCEL_URL, env.VERCEL_BRANCH_URL]) {
-    if (host) origins.add(`https://${host}`);
+  const siteUrl = new URL(env.NEXT_PUBLIC_SITE_URL);
+  const origins = new Set([siteUrl.origin]);
+  // Also trust the www subdomain if the configured URL is the apex, and vice versa.
+  const host = siteUrl.hostname;
+  if (host.startsWith("www.")) {
+    origins.add(`${siteUrl.protocol}//${host.slice(4)}`);
+  } else {
+    origins.add(`${siteUrl.protocol}//www.${host}`);
+  }
+  for (const vHost of [env.VERCEL_URL, env.VERCEL_BRANCH_URL]) {
+    if (vHost) origins.add(`https://${vHost}`);
   }
   return origins;
 }
