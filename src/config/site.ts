@@ -19,7 +19,7 @@ export const site = {
   tagline: siteContent.tagline,
   url: siteContent.url,
   description:
-    "Websites, mobile apps, WhatsApp bots and calling agents, and the marketing that fills them. Scoped in writing, shipped in weekly demos, and handed over with you owning every account.",
+    "GetwithUs is a software development agency in India. We build websites, mobile apps, WhatsApp bots, AI calling agents, and run digital marketing. Fixed price, weekly demos, accounts you own.",
   footerDescription: "Websites, apps, agents, and marketing for businesses that need them to work.",
   contact: {
     email: siteContent.email,
