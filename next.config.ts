@@ -4,6 +4,8 @@ import { flags } from "./src/config/flags";
 
 const TURNSTILE_ORIGIN = "https://challenges.cloudflare.com";
 const PLAUSIBLE_ORIGIN = "https://plausible.io";
+const GA_ORIGIN = "https://www.googletagmanager.com";
+const GA_COLLECT = "https://www.google-analytics.com";
 
 /**
  * One static Content-Security-Policy for every route. A per-request nonce would
@@ -13,8 +15,8 @@ const PLAUSIBLE_ORIGIN = "https://plausible.io";
  */
 function contentSecurityPolicy(): string {
   const isDev = env.NODE_ENV === "development";
-  const scriptSrc = ["'self'", "'unsafe-inline'"];
-  const connectSrc = ["'self'"];
+  const scriptSrc = ["'self'", "'unsafe-inline'", GA_ORIGIN];
+  const connectSrc = ["'self'", GA_COLLECT, GA_ORIGIN];
 
   if (isDev) scriptSrc.push("'unsafe-eval'");
   if (flags.turnstile) {
