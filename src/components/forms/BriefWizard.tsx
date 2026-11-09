@@ -12,6 +12,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import { formCopy } from "@/content/forms";
 import { serviceSlugs } from "@/content/services/catalog";
 import { useBriefStore } from "@/stores/brief.store";
+import { trackFormStart } from "@/lib/analytics";
 
 /**
  * A service named in the URL (`/start?service=web-development`, from the
@@ -54,6 +55,7 @@ export default function BriefWizard() {
   const finish = useBriefStore((state) => state.finish);
   const panel = useRef<HTMLDivElement>(null);
   const firstRender = useRef(true);
+  const formStartFired = useRef(false);
 
   // After the first frame, every step change moves focus to the new step's heading.
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function BriefWizard() {
       <Skeleton className="h-11 w-32" />
     </div>
   ) : done ? (
-    <SuccessStep message={formCopy.success.brief} />
+    <SuccessStep message={formCopy.success.brief} source="brief" />
   ) : step === 5 && pending ? (
     <VerifyCodeStep
       leadId={pending.leadId}
@@ -94,7 +96,15 @@ export default function BriefWizard() {
   );
 
   return (
-    <div ref={panel} className="grid gap-10 rounded-panel border border-line bg-card p-6 md:p-10">
+    <div
+      ref={panel}
+      className="grid gap-10 rounded-panel border border-line bg-card p-6 md:p-10"
+      onFocus={() => {
+        if (formStartFired.current || !hydrated) return;
+        formStartFired.current = true;
+        trackFormStart("brief");
+      }}
+    >
       <BriefProgress step={hydrated ? step : 1} done={done} />
       {body}
     </div>

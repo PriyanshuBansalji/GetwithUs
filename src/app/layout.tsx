@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import SkipLink from "@/components/layout/SkipLink";
 import Toast from "@/components/ui/Toast";
 import { site } from "@/config/site";
+import { publicEnv } from "@/config/public-env";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "@/styles/globals.css";
 
@@ -68,6 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SkipLink />
         {children}
         <Toast />
+        {publicEnv.gaId ? <GoogleAnalytics gaId={publicEnv.gaId} /> : null}
       </body>
     </html>
   );

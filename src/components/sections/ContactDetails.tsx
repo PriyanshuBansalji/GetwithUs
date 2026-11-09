@@ -2,6 +2,7 @@ import { CalendarDays, Globe, Mail, MapPin, Phone, type LucideIcon } from "lucid
 import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
+import TrackedLink from "@/components/layout/TrackedLink";
 import { known, site } from "@/config/site";
 import { contactPage } from "@/content/pages";
 import { siteContent } from "@/content/site";
@@ -19,9 +20,9 @@ function details(): Detail[] {
       label: "Email",
       icon: Mail,
       value: (
-        <a href={`mailto:${email}`} className="text-ink transition-colors hover:text-accent">
+        <TrackedLink kind="email" href={`mailto:${email}`} className="text-ink transition-colors hover:text-accent">
           {email}
-        </a>
+        </TrackedLink>
       ),
     });
   }

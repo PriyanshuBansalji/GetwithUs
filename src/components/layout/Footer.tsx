@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import Logo from "@/components/ui/Logo";
+import TrackedLink from "@/components/layout/TrackedLink";
 import { known, site, visibleNav } from "@/config/site";
 import { serviceLines } from "@/content/services/catalog";
 import { getPublishedCaseStudies } from "@/features/case-studies/getPublishedCaseStudies";
@@ -31,9 +32,9 @@ export default function Footer() {
             {email || phone || city ? (
               <address className="grid gap-1 type-small not-italic">
                 {email ? (
-                  <a href={`mailto:${email}`} className={linkClasses}>
+                  <TrackedLink kind="email" href={`mailto:${email}`} className={linkClasses}>
                     {email}
-                  </a>
+                  </TrackedLink>
                 ) : null}
                 {phone ? <span>{phone}</span> : null}
                 {city ? <span>{city}</span> : null}

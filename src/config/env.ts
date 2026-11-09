@@ -53,6 +53,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_SITE_URL: z.url(),
     NEXT_PUBLIC_SITE_NAME: z.string().default("GetwithUs"),
+    NEXT_PUBLIC_GA_ID: z.string().optional(),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
     NEXT_PUBLIC_PLAUSIBLE_DOMAIN: z.string().optional(),
     NEXT_PUBLIC_SCHEDULING_URL: z.url().optional(),
@@ -87,6 +88,7 @@ export const env = createEnv({
     VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
+    NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     NEXT_PUBLIC_PLAUSIBLE_DOMAIN: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
     NEXT_PUBLIC_SCHEDULING_URL: process.env.NEXT_PUBLIC_SCHEDULING_URL,

@@ -5,13 +5,24 @@ import { useEffect, useRef } from "react";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/ui/Icon";
 import { formCopy } from "@/content/forms";
+import { trackGenerateLead } from "@/lib/analytics";
 
 /** The end of a form: what happens next, and a way back to the home page. */
-export default function SuccessStep({ message }: { message: string }) {
+export default function SuccessStep({
+  message,
+  source,
+}: {
+  message: string;
+  source: "contact" | "brief";
+}) {
   const heading = useRef<HTMLHeadingElement>(null);
 
-  // Move focus here so screen readers announce the confirmation.
-  useEffect(() => heading.current?.focus(), []);
+  useEffect(() => {
+    heading.current?.focus();
+    // Fire generate_lead once, when the success screen first mounts.
+    trackGenerateLead(source);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="grid gap-5">
