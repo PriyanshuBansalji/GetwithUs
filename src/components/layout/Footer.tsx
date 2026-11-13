@@ -13,6 +13,7 @@ const headingClasses = "mb-4 text-sm font-bold text-ink";
 export default function Footer() {
   const email = known(site.contact.email);
   const phone = known(site.contact.phone);
+  const address = known(site.contact.address);
   const city = known(site.contact.city);
   const owner = known(site.legalEntity) ?? site.name;
   const companyLinks = [
@@ -29,7 +30,7 @@ export default function Footer() {
             <Logo />
             <p className="font-display text-lg font-bold text-ink">{site.tagline}</p>
             <p className="max-w-[36ch]">{site.footerDescription}</p>
-            {email || phone || city ? (
+            {email || phone || address || city ? (
               <address className="grid gap-1 type-small not-italic">
                 {email ? (
                   <TrackedLink kind="email" href={`mailto:${email}`} className={linkClasses}>
@@ -37,7 +38,7 @@ export default function Footer() {
                   </TrackedLink>
                 ) : null}
                 {phone ? <span>{phone}</span> : null}
-                {city ? <span>{city}</span> : null}
+                {address ? <span>{address}</span> : city ? <span>{city}</span> : null}
               </address>
             ) : null}
             {site.social.length ? (

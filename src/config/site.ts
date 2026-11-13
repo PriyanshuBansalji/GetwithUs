@@ -24,8 +24,8 @@ export const site = {
   contact: {
     email: siteContent.email,
     phone: "[OWNER: phone or WhatsApp number]",
-    city: "India",
-    address: "[OWNER: address]",
+    city: siteContent.city,
+    address: siteContent.address,
   },
   legalEntity: "[OWNER: legal entity name]",
   responseTime: "one business day",
